@@ -5,6 +5,7 @@
 typedef Enum(u8, token_precedence){
     Prec_None,
     Prec_Assignment,
+    Prec_Ternary,
     Prec_Or,
     Prec_And,
     Prec_Equality,

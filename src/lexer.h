@@ -36,9 +36,6 @@ typedef struct {
 
     usize line;
     usize col;
-
-    usize token_line;
-    usize token_col;
 } token;
 
 typedef struct {
