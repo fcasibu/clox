@@ -33,7 +33,7 @@ Run()
 #define READ_CONSTANT() (VM.chunks->constants.items[READ_BYTE()])
 #define READ_CONSTANT_LONG() \
     (VM.chunks->constants.items[(READ_BYTE() << 16) | (READ_BYTE() << 8) | READ_BYTE()])
-#define BINARY_OP(op) Stmt(double a = PopStack(); double b = PopStack(); PushStack(a op b);)
+#define BINARY_OP(op) Stmt(double b = PopStack(); double a = PopStack(); PushStack(a op b);)
 
     for (;;) {
 #if DEBUG
@@ -78,11 +78,11 @@ Run()
             case OP_RETURN: {
                 PrintValue(PopStack());
                 printf("\n");
-                return INTERPRET_OK;
+                return Interpret_Ok;
             }
 
             default:
-                return INTERPRET_RUNTIME_ERROR;
+                return Interpret_RuntimeError;
         }
     }
 
@@ -93,12 +93,25 @@ Run()
 }
 
 internal interpret_result
-Interpret(chunk *c)
+Interpret(context *ctx, const char *source)
 {
-    Assert(c);
+    Assert(ctx);
+    Assert(source);
 
-    VM.chunks = c;
+    chunk c = { 0 };
+    temporary_memory temp_mem = BeginTemporaryMemory(&ctx->temporary_arena);
+    InitializeChunk(temp_mem.arena, &c, 256);
+
+    VM.chunks = &c;
     VM.ip = VM.chunks->items;
 
-    return Run();
+    if (!Compile(&ctx->main_arena, source, &c)) {
+        EndTemporaryMemory(temp_mem);
+        return Interpret_CompileError;
+    }
+
+    interpret_result result = Run();
+
+    EndTemporaryMemory(temp_mem);
+    return result;
 }

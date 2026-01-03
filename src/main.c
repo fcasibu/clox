@@ -2,24 +2,26 @@
 #include <sys/mman.h>
 
 #include "base.h"
-
 #include "arena.h"
-#include "val.h"
-#include "chunk.h"
-#include "vm.h"
-#include "lexer.h"
-
-#include "arena.c"
-#include "val.c"
-#include "chunk.c"
-#include "debug.c"
-#include "vm.c"
-#include "lexer.c"
 
 typedef struct {
     memory_arena main_arena;
     memory_arena temporary_arena;
 } context;
+
+#include "val.h"
+#include "chunk.h"
+#include "lexer.h"
+#include "compiler.h"
+#include "vm.h"
+
+#include "arena.c"
+#include "val.c"
+#include "chunk.c"
+#include "debug.c"
+#include "lexer.c"
+#include "compiler.c"
+#include "vm.c"
 
 internal void
 InitializeContext(context *ctx)
@@ -94,34 +96,12 @@ main(void)
 {
     context ctx = { 0 };
     InitializeContext(&ctx);
+    InitializeVM();
 
     const char *source = ReadFile(&ctx.main_arena, "main.lox");
 
-    lexer l = { 0 };
-    InitializeLexer(&l, source);
-
-    for (;;) {
-        token t = ScanToken(&l);
-
-        if (t.kind == TokenKind_Error)
-            continue;
-
-        printf("%s:%zu:%zu: %.*s\n", "main.lox", t.line, t.col, (int)t.length, t.lexeme_start);
-
-        if (t.kind == TokenKind_Eof)
-            break;
-    }
-
-    // chunk c = { 0 };
-    // InitializeChunk(&ctx.main_arena, &c, 256);
-    // InitializeVM();
-    //
-    // WriteConstant(&ctx.main_arena, &c, 5.0f, 4);
-    // WriteChunk(&ctx.main_arena, &c, OP_NEGATE, 4);
-    // WriteChunk(&ctx.main_arena, &c, OP_RETURN, 4);
-    // Interpret(&c);
-    //
-    // DissassembleChunk(&c, "test chunk");
+    InitializeLexer(source);
+    Interpret(&ctx, source);
 
     FreeArena(&ctx.main_arena);
 

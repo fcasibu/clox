@@ -4,9 +4,9 @@
 #define STACK_MAX MB(8)
 
 typedef Enum(u8, interpret_result){
-    INTERPRET_OK,
-    INTERPRET_COMPILE_ERROR,
-    INTERPRET_RUNTIME_ERROR,
+    Interpret_Ok,
+    Interpret_CompileError,
+    Interpret_RuntimeError,
 };
 
 typedef struct {
