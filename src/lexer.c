@@ -5,6 +5,17 @@ global const char *FILE_NAME = "main.lox";
 
 global lexer Lexer;
 
+// clang-format off
+global_const struct {
+    const char *identifier;
+    token_kind kind;
+} RESERVED_WORDS_TABLE[] = {
+    {"true",  TokenKind_True},
+    {"false", TokenKind_False},
+    {"nil",   TokenKind_Nil},
+};
+// clang-format on
+
 internal void
 ReportLexer(const char *message)
 {
@@ -47,6 +58,20 @@ InitializeLexer(const char *source)
     Lexer.token_col = 1;
 }
 
+internal token_kind
+LookupKeyword(const char *str)
+{
+    local_const usize count = ArrayCount(RESERVED_WORDS_TABLE);
+
+    for (usize i = 0; i < count; ++i) {
+        if (strcmp(str, RESERVED_WORDS_TABLE[i].identifier) == 0)
+            return RESERVED_WORDS_TABLE[i].kind;
+    }
+
+    ReportLexer("Unexpected token");
+    return TokenKind_Error;
+}
+
 internal inline token
 MakeToken(token_kind kind)
 {
@@ -61,18 +86,9 @@ MakeToken(token_kind kind)
 }
 
 internal inline char
-PeekNextToken(void)
+PeekToken(usize dist)
 {
-    if (*Lexer.current_char == '\0')
-        return '\0';
-
-    return *(Lexer.current_char + 1);
-}
-
-internal inline char
-PeekToken(void)
-{
-    return *Lexer.current_char;
+    return Lexer.current_char[dist];
 }
 
 internal inline char
@@ -94,12 +110,26 @@ AdvanceLexer(void)
 }
 
 internal token
-LexerString(void)
+LexerIdentifier(void)
 {
-    while (PeekToken() != '"' && PeekToken() != '\0')
+    while ((isalnum(PeekToken(0)) || PeekToken(0) == '_') && PeekToken(0) != '\0')
         AdvanceLexer();
 
-    if (PeekToken() == '\0') {
+    usize length = Lexer.current_char - Lexer.lexeme_start;
+    char tmp[length + 1];
+    strncpy(tmp, Lexer.lexeme_start, length);
+    tmp[length] = '\0';
+
+    return MakeToken(LookupKeyword(tmp));
+}
+
+internal token
+LexerString(void)
+{
+    while (PeekToken(0) != '"' && PeekToken(0) != '\0')
+        AdvanceLexer();
+
+    if (PeekToken(0) == '\0') {
         ReportLexer("Unterminated string.");
         return MakeToken(TokenKind_Error);
     }
@@ -112,18 +142,18 @@ LexerString(void)
 internal token
 LexerNumber(void)
 {
-    while (isdigit(PeekToken()) && PeekToken() != '\0')
+    while (isdigit(PeekToken(0)) && PeekToken(0) != '\0')
         AdvanceLexer();
 
-    if (PeekToken() == '.') {
+    if (PeekToken(0) == '.') {
         AdvanceLexer();
 
-        if (!isdigit(PeekToken())) {
+        if (!isdigit(PeekToken(0))) {
             ReportLexer("Invalid numeric literal: expected digits after '.'.");
             return MakeToken(TokenKind_Error);
         }
 
-        while (isdigit(PeekToken()) && PeekToken() != '\0')
+        while (isdigit(PeekToken(0)) && PeekToken(0) != '\0')
             AdvanceLexer();
     }
 
@@ -135,7 +165,7 @@ ScanToken(void)
 {
 #define ReturnNextMatchOrCurrent(char, next_token, current_token) \
     do {                                                          \
-        if (PeekNextToken() == char) {                            \
+        if (PeekToken(0) == char) {                               \
             AdvanceLexer();                                       \
             return MakeToken(next_token);                         \
         }                                                         \
@@ -143,25 +173,25 @@ ScanToken(void)
     } while (0)
 
     for (;;) {
-        while (isspace(PeekToken()))
+        while (isspace(PeekToken(0)))
             AdvanceLexer();
 
         Lexer.lexeme_start = Lexer.current_char;
         Lexer.token_line = Lexer.line;
         Lexer.token_col = Lexer.col;
 
-        if (PeekToken() == '/' && PeekNextToken() == '/') {
-            while (PeekToken() != '\n' && PeekToken() != '\0')
+        if (PeekToken(0) == '/' && PeekToken(1) == '/') {
+            while (PeekToken(0) != '\n' && PeekToken(0) != '\0')
                 AdvanceLexer();
-        } else if (PeekToken() == '/' && PeekNextToken() == '*') {
-            while (PeekToken() != '\0') {
-                if (PeekToken() == '*' && PeekNextToken() == '/')
+        } else if (PeekToken(0) == '/' && PeekToken(1) == '*') {
+            while (PeekToken(0) != '\0') {
+                if (PeekToken(0) == '*' && PeekToken(1) == '/')
                     break;
 
                 AdvanceLexer();
             }
 
-            if (PeekToken() != '*' && PeekNextToken() != '/') {
+            if (PeekToken(0) != '*' && PeekToken(1) != '/') {
                 ReportLexer("Unterminated comment.");
                 return MakeToken(TokenKind_Error);
             }
@@ -238,12 +268,8 @@ ScanToken(void)
                 if (isdigit(ch))
                     return LexerNumber();
 
-                if (isalnum(ch) || ch == '_') {
-                    while ((isalnum(PeekToken()) || PeekToken() == '_') && PeekToken() != '\0')
-                        AdvanceLexer();
-
-                    return MakeToken(TokenKind_Identifier);
-                }
+                if (isalnum(ch) || ch == '_')
+                    return LexerIdentifier();
 
                 ReportLexer("Unexpected token");
                 return MakeToken(TokenKind_Error);

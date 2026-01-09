@@ -80,14 +80,14 @@ ReadFile(memory_arena *arena, const char *path)
         goto cleanup;
     }
 
-    fclose(file_ptr);
     source[bytes_read] = '\0';
-
+    fclose(file_ptr);
     return source;
 
 cleanup:
     if (file_ptr)
         fclose(file_ptr);
+
     return NULL;
 }
 

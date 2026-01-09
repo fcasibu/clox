@@ -11,7 +11,7 @@ InitializeValues(memory_arena *arena, values *v, usize initial_cap)
     Assert(v->items);
 }
 
-internal void
+internal inline void
 WriteValue(memory_arena *arena, values *v, value item)
 {
     Assert(arena);
@@ -24,8 +24,46 @@ WriteValue(memory_arena *arena, values *v, value item)
     v->items[v->size++] = item;
 }
 
-internal inline void
+internal void
 PrintValue(value item)
 {
-    printf("%g", item);
+    switch (item.type) {
+        case Value_Nil: {
+            printf("nil");
+        } break;
+
+        case Value_Bool: {
+            printf(AsBoolean(item) ? "true" : "false");
+        } break;
+
+        case Value_Number: {
+            printf("%g", AsNumber(item));
+        } break;
+
+            INVALID_DEFAULT_CASE;
+    }
+}
+
+internal inline b32
+IsFalsyValue(value v)
+{
+    return IsNil(v) || (IsBoolean(v) && !AsBoolean(v));
+}
+
+internal b32
+AreValuesEqual(value a, value b)
+{
+    if (a.type != b.type)
+        return false;
+
+    switch (a.type) {
+        case Value_Number:
+            return AsNumber(a) == AsNumber(b);
+        case Value_Bool:
+            return AsBoolean(a) == AsBoolean(b);
+        case Value_Nil:
+            return true;
+
+            INVALID_DEFAULT_CASE;
+    }
 }

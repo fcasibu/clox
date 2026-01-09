@@ -4,61 +4,73 @@
 
 internal PARSE_FN(Grouping);
 internal PARSE_FN(Number);
+internal PARSE_FN(Literal);
 internal PARSE_FN(Expression);
 internal PARSE_FN(Unary);
 internal PARSE_FN(Binary);
 internal PARSE_FN(Ternary);
 
 // clang-format off
-global parse_rule Rules[] = {
-    [TokenKind_LeftParen]    = {Grouping, NULL,    Prec_None     },
-    [TokenKind_RightParen]   = {NULL,     NULL,    Prec_None     },
-    [TokenKind_LeftBrace]    = {NULL,     NULL,    Prec_None     },
-    [TokenKind_RightBrace]   = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Comma]        = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Dot]          = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Minus]        = {Unary,    Binary,  Prec_Term     },
-    [TokenKind_Plus]         = {NULL,     Binary,  Prec_Term     },
-    [TokenKind_Semicolon]    = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Slash]        = {NULL,     Binary,  Prec_Factor   },
-    [TokenKind_Star]         = {NULL,     Binary,  Prec_Factor   },
-    [TokenKind_QuestionMark] = {NULL,     Ternary, Prec_Ternary  },
-    [TokenKind_Colon]        = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Bang]         = {NULL,     NULL,    Prec_None     },
-    [TokenKind_BangEqual]    = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Equal]        = {NULL,     NULL,    Prec_None     },
-    [TokenKind_EqualEqual]   = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Greater]      = {NULL,     NULL,    Prec_None     },
-    [TokenKind_GreaterEqual] = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Less]         = {NULL,     NULL,    Prec_None     },
-    [TokenKind_LessEqual]    = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Identifier]   = {NULL,     NULL,    Prec_None     },
-    [TokenKind_String]       = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Number]       = {Number,   NULL,    Prec_None     },
-    [TokenKind_And]          = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Class]        = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Else]         = {NULL,     NULL,    Prec_None     },
-    [TokenKind_False]        = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Fun]          = {NULL,     NULL,    Prec_None     },
-    [TokenKind_For]          = {NULL,     NULL,    Prec_None     },
-    [TokenKind_If]           = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Nil]          = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Or]           = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Print]        = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Return]       = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Super]        = {NULL,     NULL,    Prec_None     },
-    [TokenKind_This]         = {NULL,     NULL,    Prec_None     },
-    [TokenKind_True]         = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Var]          = {NULL,     NULL,    Prec_None     },
-    [TokenKind_While]        = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Break]        = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Error]        = {NULL,     NULL,    Prec_None     },
-    [TokenKind_Eof]          = {NULL,     NULL,    Prec_None     },
+global_const parse_rule Rules[] = {
+    [TokenKind_LeftParen]    = {Grouping, NULL,    Prec_None               },
+    [TokenKind_RightParen]   = {NULL,     NULL,    Prec_None               },
+    [TokenKind_LeftBrace]    = {NULL,     NULL,    Prec_None               },
+    [TokenKind_RightBrace]   = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Comma]        = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Dot]          = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Minus]        = {Unary,    Binary,  Prec_Term               },
+    [TokenKind_Plus]         = {NULL,     Binary,  Prec_Term               },
+    [TokenKind_Semicolon]    = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Slash]        = {NULL,     Binary,  Prec_Factor             },
+    [TokenKind_Star]         = {NULL,     Binary,  Prec_Factor             },
+    [TokenKind_QuestionMark] = {NULL,     Ternary, Prec_Ternary            },
+    [TokenKind_Colon]        = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Bang]         = {Unary,    NULL,    Prec_None               },
+    [TokenKind_BangEqual]    = {NULL,     Binary,  Prec_Equality           },
+    [TokenKind_EqualEqual]   = {NULL,     Binary,  Prec_Equality           },
+    [TokenKind_Equal]        = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Greater]      = {NULL,     Binary,  Prec_Comparison         },
+    [TokenKind_GreaterEqual] = {NULL,     Binary,  Prec_Comparison         },
+    [TokenKind_Less]         = {NULL,     Binary,  Prec_Comparison         },
+    [TokenKind_LessEqual]    = {NULL,     Binary,  Prec_Comparison         },
+    [TokenKind_Identifier]   = {NULL,     NULL,    Prec_None               },
+    [TokenKind_String]       = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Number]       = {Number,   NULL,    Prec_None               },
+    [TokenKind_And]          = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Class]        = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Else]         = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Fun]          = {NULL,     NULL,    Prec_None               },
+    [TokenKind_For]          = {NULL,     NULL,    Prec_None               },
+    [TokenKind_If]           = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Nil]          = {Literal,  NULL,    Prec_None               },
+    [TokenKind_Or]           = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Print]        = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Return]       = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Super]        = {NULL,     NULL,    Prec_None               },
+    [TokenKind_This]         = {NULL,     NULL,    Prec_None               },
+    [TokenKind_True]         = {Literal,  NULL,    Prec_None               },
+    [TokenKind_False]        = {Literal,  NULL,    Prec_None               },
+    [TokenKind_Var]          = {NULL,     NULL,    Prec_None               },
+    [TokenKind_While]        = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Break]        = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Error]        = {NULL,     NULL,    Prec_None               },
+    [TokenKind_Eof]          = {NULL,     NULL,    Prec_None               },
 };
 // clang-format on
 
 global parser Parser;
 global chunk *CompilingChunk;
+
+internal inline void
+GetLexeme(char **out)
+{
+    token tok = Parser.previous;
+    char tmp[tok.length + 1];
+    memcpy(tmp, tok.lexeme_start, tok.length);
+    tmp[tok.length] = '\0';
+
+    *out = tmp;
+}
 
 internal void
 ReportParser(const char *message)
@@ -88,19 +100,7 @@ ReportParser(const char *message)
     Parser.had_error = true;
 }
 
-internal inline void
-EmitByte(u8 byte)
-{
-    WriteChunk(Parser.arena, CompilingChunk, byte, Parser.previous.line);
-}
-
-internal inline void
-EmitConstant(value constant)
-{
-    WriteConstant(Parser.arena, CompilingChunk, constant, Parser.previous.line);
-}
-
-internal inline parse_rule *
+internal inline const parse_rule *
 GetRule(token_kind kind)
 {
     return &Rules[kind];
@@ -117,6 +117,26 @@ AdvanceParser(void)
         if (Parser.current.kind != TokenKind_Error)
             break;
     }
+}
+
+internal inline void
+EmitBytes(u8 b1, u8 b2)
+{
+    WriteChunk(Parser.arena, CompilingChunk, b1, Parser.previous.line);
+    AdvanceParser();
+    WriteChunk(Parser.arena, CompilingChunk, b2, Parser.previous.line);
+}
+
+internal inline void
+EmitByte(u8 byte)
+{
+    WriteChunk(Parser.arena, CompilingChunk, byte, Parser.previous.line);
+}
+
+internal inline void
+EmitConstant(value constant)
+{
+    WriteConstant(Parser.arena, CompilingChunk, constant, Parser.previous.line);
 }
 
 internal void
@@ -161,6 +181,7 @@ internal inline PARSE_FN(Unary)
     // clang-format off
     switch (kind) {
         case TokenKind_Minus: EmitByte(OP_NEGATE);  break;
+        case TokenKind_Bang: EmitByte(OP_NOT); break;
 
         INVALID_DEFAULT_CASE;
     }
@@ -170,15 +191,23 @@ internal inline PARSE_FN(Unary)
 internal inline PARSE_FN(Binary)
 {
     token_kind kind = Parser.previous.kind;
-    parse_rule *rule = GetRule(kind);
+    const parse_rule *rule = GetRule(kind);
     ParsePrecedence(rule->precedence + 1);
 
     // clang-format off
     switch (kind) {
-        case TokenKind_Plus : EmitByte(OP_ADD)     ; break;
-        case TokenKind_Minus: EmitByte(OP_SUBTRACT); break;
-        case TokenKind_Star : EmitByte(OP_MULTIPLY); break;
-        case TokenKind_Slash: EmitByte(OP_DIVIDE)  ; break;
+        case TokenKind_Plus        : EmitByte(OP_ADD)               ; break;
+        case TokenKind_Minus       : EmitByte(OP_SUBTRACT)          ; break;
+        case TokenKind_Star        : EmitByte(OP_MULTIPLY)          ; break;
+        case TokenKind_Slash       : EmitByte(OP_DIVIDE)            ; break;
+
+        case TokenKind_BangEqual   : EmitBytes(OP_EQUAL, OP_NOT)    ; break;
+        case TokenKind_EqualEqual  : EmitByte(OP_EQUAL)             ; break;
+
+        case TokenKind_Less        : EmitBytes(OP_LESS, OP_NOT)     ; break;
+        case TokenKind_LessEqual   : EmitByte(OP_LESS)              ; break;
+        case TokenKind_Greater     : EmitByte(OP_GREATER)           ; break;
+        case TokenKind_GreaterEqual: EmitBytes(OP_GREATER, OP_NOT)  ; break;
 
         INVALID_DEFAULT_CASE;
     }
@@ -205,11 +234,13 @@ internal inline PARSE_FN(Grouping)
 
 internal inline PARSE_FN(Number)
 {
-    token tok = Parser.previous;
+    char *tmp = NULL;
+    GetLexeme(&tmp);
 
-    char tmp[tok.length + 1];
-    memcpy(tmp, tok.lexeme_start, tok.length);
-    tmp[tok.length] = '\0';
+    if (!tmp) {
+        ReportParser("Invalid lexeme.");
+        return;
+    }
 
     errno = 0;
     char *end = NULL;
@@ -220,7 +251,32 @@ internal inline PARSE_FN(Number)
         return;
     }
 
-    EmitConstant(number_val);
+    EmitConstant(NumberVal(number_val));
+}
+
+internal inline PARSE_FN(Literal)
+{
+    // clang-format off
+    switch(Parser.previous.kind) {
+        case TokenKind_Nil: EmitByte(OP_NIL); break;
+        case TokenKind_True: EmitByte(OP_TRUE); break;
+        case TokenKind_False: EmitByte(OP_FALSE); break;
+
+        INVALID_DEFAULT_CASE;
+    }
+}
+
+internal inline PARSE_FN(Nil)
+{
+    char *tmp = NULL;
+    GetLexeme(&tmp);
+
+    if (!tmp) {
+        ReportParser("Invalid lexeme.");
+        return;
+    }
+
+    EmitConstant(NilVal());
 }
 
 internal inline void

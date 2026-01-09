@@ -1,4 +1,37 @@
+#include <stdarg.h>
+#include <stdio.h>
+
 global vm VM;
+
+internal inline void
+ResetStack(void)
+{
+    VM.stack_top = VM.stack;
+}
+
+internal inline void
+InitializeVM(void)
+{
+    ResetStack();
+}
+
+internal void
+ReportRuntime(const char *fmt, ...)
+{
+    fflush(stdout);
+
+    va_list args;
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+    fputs("\n", stderr);
+
+    line_info prev_line = VM.chunks->lines.items[VM.ip - VM.chunks->items - 1];
+    fprintf(stderr, "[line %zu] in script\n", prev_line.line);
+    ResetStack();
+
+    fflush(stderr);
+}
 
 internal inline void
 PushStack(value v)
@@ -8,32 +41,35 @@ PushStack(value v)
 }
 
 internal inline value
-PopStack()
+PeekStack(usize dist)
+{
+    return VM.stack_top[-1 - dist];
+}
+
+internal inline value
+PopStack(void)
 {
     VM.stack_top--;
     return *VM.stack_top;
 }
 
-internal inline void
-ResetStack()
-{
-    VM.stack_top = VM.stack;
-}
-
-internal inline void
-InitializeVM()
-{
-    ResetStack();
-}
-
 internal interpret_result
-Run()
+Run(void)
 {
 #define READ_BYTE() (*VM.ip++)
 #define READ_CONSTANT() (VM.chunks->constants.items[READ_BYTE()])
 #define READ_CONSTANT_LONG() \
     (VM.chunks->constants.items[(READ_BYTE() << 16) | (READ_BYTE() << 8) | READ_BYTE()])
-#define BINARY_OP(op) Stmt(double b = PopStack(); double a = PopStack(); PushStack(a op b);)
+#define BINARY_OP(value_type, op)                                 \
+    do {                                                          \
+        if (!IsNumber(PeekStack(0)) || !IsNumber(PeekStack(1))) { \
+            ReportRuntime("Operands must be a number.");          \
+            return Interpret_RuntimeError;                        \
+        }                                                         \
+        f32 b = AsNumber(PopStack());                             \
+        f32 a = AsNumber(PopStack());                             \
+        PushStack(value_type(a op b));                            \
+    } while (0)
 
     for (;;) {
 #if DEBUG
@@ -64,15 +100,38 @@ Run()
             } break;
 
                 // clang-format off
-            case OP_ADD:      BINARY_OP(+);             break;
-            case OP_SUBTRACT: BINARY_OP(-);             break;
-            case OP_MULTIPLY: BINARY_OP(*);             break;
-            case OP_DIVIDE:   BINARY_OP(/);             break;
+            case OP_NIL  : PushStack(NilVal())      ; break;
+            case OP_TRUE : PushStack(BoolVal(true)) ; break;
+            case OP_FALSE: PushStack(BoolVal(false)); break;
                 // clang-format on
 
+                // clang-format off
+            case OP_ADD:      BINARY_OP(NumberVal, +); break;
+            case OP_SUBTRACT: BINARY_OP(NumberVal, -); break;
+            case OP_MULTIPLY: BINARY_OP(NumberVal, *); break;
+            case OP_DIVIDE:   BINARY_OP(NumberVal, /); break;
+            case OP_GREATER:  BINARY_OP(BoolVal, >); break;
+            case OP_LESS:     BINARY_OP(BoolVal, <); break;
+                // clang-format on
+
+            case OP_NOT: {
+                *(VM.stack_top - 1) = BoolVal(IsFalsyValue(*(VM.stack_top - 1)));
+            } break;
+
             case OP_NEGATE: {
-                Assert(VM.stack_top > VM.stack);
-                *(VM.stack_top - 1) *= -1.0f;
+                value val = *(VM.stack_top - 1);
+                if (!IsNumber(val)) {
+                    ReportRuntime("Operand must be a number.");
+                    return Interpret_RuntimeError;
+                }
+
+                *(VM.stack_top - 1) = NumberVal(AsNumber(val) * -1.0f);
+            } break;
+
+            case OP_EQUAL: {
+                value b = PopStack();
+                value a = PopStack();
+                PushStack(BoolVal(AreValuesEqual(a, b)));
             } break;
 
             case OP_RETURN: {
@@ -81,8 +140,7 @@ Run()
                 return Interpret_Ok;
             }
 
-            default:
-                return Interpret_RuntimeError;
+                INVALID_DEFAULT_CASE;
         }
     }
 
@@ -110,7 +168,11 @@ Interpret(context *ctx, const char *source)
         return Interpret_CompileError;
     }
 
+    DissassembleChunk(&c, "tesst");
+
     interpret_result result = Run();
+
+    printf("%d\n", result);
 
     EndTemporaryMemory(temp_mem);
     return result;
